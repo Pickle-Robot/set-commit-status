@@ -24,9 +24,11 @@ runs:
       # Automerge supports the `workflow_run` event, but unfortunately workflow_run events
       # only trigger for builds on the default branch, so they don't work here.
       run: >-
+        SHA=${{github.event.pull_request.head.sha || github.sha}}
+
         curl -L -X POST
         -H "Content-Type: application/json"
         -H "Authorization: token ${{ inputs.github_token }}"
         -d '{"state": "success", "description": "${{ inputs.description }}", "context": "${{ inputs.context }}"}'
-        "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}"
+        "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${SHA}"
       shell: bash
