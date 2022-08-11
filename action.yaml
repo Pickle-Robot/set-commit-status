@@ -1,0 +1,32 @@
+name: "Trigger Automerge"
+description: "Triggers a status so automerge can run"
+
+inputs:
+  description:
+    description: "label of the job being run"
+    required: true
+  github_token:
+    description: "github token to use to set status"
+    required: true
+  context:
+    description: "The context to use when setting the status"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: set-commit-status
+      # Send an API command to set a "success" status to the commit.
+      # Although the workflow does this on its own, Github doesn't allow one workflow to
+      # trigger another out of fear of circular triggers. We get around this here by using
+      # picklerobotpc's personal access token to set a separate successful status. This
+      # will be able to trigger new workflows, most importantly the automerge one.
+      # Automerge supports the `workflow_run` event, but unfortunately workflow_run events
+      # only trigger for builds on the default branch, so they don't work here.
+      run: >-
+        curl -L -X POST
+        -H "Content-Type: application/json"
+        -H "Authorization: token ${{ inputs.github_token }}"
+        -d '{"state": "success", "description": "${{ inputs.description }}", "context": "${{ inputs.context }}"}'
+        "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}"
+      shell: bash
